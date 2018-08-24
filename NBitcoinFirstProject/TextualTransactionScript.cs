@@ -10,19 +10,15 @@ using System.Threading.Tasks;
 
 namespace NBitcoinFirstProject
 {
-    //transaction 930a2114cdaa86e1fac46d15c74e81c09eee1d4150ff9d48e76cb0697d8e1d72
-    /*
-         Method "Pay-to-Fake-Key-Hash" - P2FKH
-The storage afforded by the P2FKH method is 20 bytes per
-output, but many outputs can be included in a single transaction. This method has been used
-to store text,
-9
-images (see Fig. 1), and mp3 files
-10
-in Bitcoin’s blockchain, and is currently the
-method employed by tools like Apertus.io.
-56
+    //transaction d29c9c0e8e4d2a9790922af73f0b8d51f0bd4bb19940d9cf910ead8fbe85bc9b
 
+    /*
+     * Method "OP_RETURN".
+     * 
+     * Push data having size 893 bytes. OP_CODES:
+     * 
+     * 6a                4d                    d7 03 
+     * OP_RETURN    OP_PUSHDATA2    (03d7 = 983 following bytes)
      */
     class TextualTransactionScript
     {
