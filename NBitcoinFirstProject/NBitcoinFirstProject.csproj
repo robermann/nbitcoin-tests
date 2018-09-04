@@ -79,6 +79,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FirstTestnetTransaction.cs" />
     <Compile Include="TextualTransactionScript.cs" />
     <Compile Include="TextualTransactionAddress.cs" />
     <Compile Include="Program.cs" />
