@@ -19,7 +19,8 @@ namespace NBitcoinFirstProject
             //Transaction1();
             //Transaction2();
             //Transaction3();
-            Transaction4();
+            //Transaction4();
+            ColoredTransaction();
         }
 
         //transaction https://live.blockcypher.com/btc-testnet/tx/4761929185a3dd80f23670efb854ba3d7ab5a151f296ea7c38015ceb821ee838/
@@ -281,5 +282,161 @@ namespace NBitcoinFirstProject
 
             return signedTx;
         }
+
+        //transaction https://live.blockcypher.com/btc-testnet/tx/1fdabe95c10025e1e220fdc72222ec51d6e14d376d172f183b39bfda35c44a6c/
+        private static void ColoredTransaction()
+        {
+            var bitcoinPrivateKey = new BitcoinSecret("cS88F3sJycinEUfGGMQH4w4izaNjEec97VAHsoQZYmDjZJwK1wuf");
+            var key = bitcoinPrivateKey.PrivateKey;
+
+            var network = bitcoinPrivateKey.Network;
+            var address = bitcoinPrivateKey.GetAddress();
+
+            var client = new QBitNinjaClient(network);
+
+            var transactionId = uint256.Parse("46d8eaffddbe7309a2add03428a7623ce335ce47f5eb65514aa819f57a14dfcd");
+
+            var transactionResponse = client.GetTransaction(transactionId).Result;
+
+            Console.WriteLine(transactionResponse.TransactionId);
+
+            if (transactionResponse.Block != null)
+            {
+                Console.WriteLine(transactionResponse.Block.Confirmations);
+            }
+
+
+            #region  detect the correct outpount to use
+
+            var receivedCoins = transactionResponse.ReceivedCoins;
+            OutPoint outPointToSpend = null;
+            foreach (var coin in receivedCoins)
+            {
+                if (coin.TxOut.ScriptPubKey == bitcoinPrivateKey.ScriptPubKey)
+                {
+                    outPointToSpend = coin.Outpoint;
+                }
+            }
+            if (outPointToSpend == null)
+                throw new Exception("TxOut doesn't contain our ScriptPubKey");
+
+            Console.WriteLine("We want to spend # {0} outpoint", outPointToSpend.N + 1);
+            #endregion 
+
+
+            #region How much you want to spend
+
+            // How much you want to spend
+            var destinationAmount = new Money(0.001m, MoneyUnit.BTC);
+
+            // How much miner fee you want to pay
+            var minerFee = new Money(0.00010000m, MoneyUnit.BTC);
+
+            // How much you want to get back as change
+            var txInAmount = (Money)receivedCoins[(int)outPointToSpend.N].Amount;
+            var changeAmount = txInAmount - destinationAmount - minerFee;
+
+            #endregion
+
+            #region create TxOuts
+            var destinationAddress = BitcoinAddress.Create("mv7SwdxTpJtqgZCwW6hDgdvTud2gDuuAL4", network);
+
+            TxOut destinationTxOut = new TxOut()
+            {
+                Value = destinationAmount,
+                ScriptPubKey = destinationAddress.ScriptPubKey
+            };
+
+            TxOut changeTxOut = new TxOut()
+            {
+                Value = changeAmount,
+                ScriptPubKey = bitcoinPrivateKey.ScriptPubKey
+            };
+
+            #endregion
+            
+            #region create meta tag
+
+            String hash = "4565629a158493bb5e9f9319491e3724b5be3445"; //Hasher.hash256Ripemd160(bytes);
+
+            byte[] script = FromHexString("6a4c18"); //opreturn 6a OP_PUSHDATA1 4c, size 18 = 24 
+            byte[] protocol = GetProtocol();
+            byte[] data = FromHexString(hash);
+            
+            byte[] fullScript = script.Concat(protocol).Concat(data).ToArray();
+            
+
+            TxOut msgTxtOut = new TxOut()
+            {
+                Value = Money.Zero,
+                ScriptPubKey = new Script(fullScript)
+
+            };
+
+            #endregion
+
+            #region build transaction
+            Transaction transaction = Transaction.Create(network);
+            transaction.Inputs.Add(new TxIn()
+            {
+                PrevOut = outPointToSpend
+            });
+            transaction.Outputs.Add(destinationTxOut);
+            transaction.Outputs.Add(changeTxOut);
+            transaction.Outputs.Add(msgTxtOut);
+
+            //see https://live.blockcypher.com/btc/decodetx/
+            String txHex = transaction.ToHex();
+            #endregion
+
+            transaction.Inputs[0].ScriptSig = bitcoinPrivateKey.ScriptPubKey;
+
+            #region sign transaction
+            transaction.Sign(bitcoinPrivateKey, false);
+            String txHexPostSign = transaction.ToHex();
+            #endregion
+            
+            try
+            {
+                RPCClient rc = new RPCClient(Network.TestNet);
+                rc.SendRawTransaction(transaction);
+                
+            }
+            catch (Exception e)
+            {
+                String msg = e.Message;
+
+                Console.WriteLine("error: " + msg); //error code: -27, msg: transaction already in block chain
+            }
+
+        }
+
+        public static byte[] GetProtocol()
+        {
+            /*
+                PROTOCOL_ID: 4257 ("BW", Bit-Wine)
+                VERSION:     0100
+                ACTION:      0100
+            */
+            /*
+                from class ColorMarker
+                const ushort Tag = 0x414f; //AO -> OA 
+                ushort version = 1;
+                ushort action= 1;
+            */
+            return FromHexString("42571010");
+        }
+
+        public static byte[] FromHexString(string hexString)
+        {
+            var bytes = new byte[hexString.Length / 2];
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
+            }
+
+            return bytes;
+        }
+
     }
 }

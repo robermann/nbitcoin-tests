@@ -15,8 +15,12 @@ namespace NBitcoinFirstProject
             //Program.Run(args);
             //TextualTransactionAddress.Run(args);
             //TextualTransactionScript.Run(args);
-            //FirstTestnetTransaction.Run(args);
-            Hasher.Run();
+
+            //Hasher.Run();
+
+            FirstTestnetTransaction.Run(args);
+
+            Console.ReadLine();
         }
 
         public static void Run(string[] args)
