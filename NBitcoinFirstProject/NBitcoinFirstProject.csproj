@@ -79,6 +79,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MnemonicKey.cs" />
     <Compile Include="Hasher.cs" />
     <Compile Include="FirstTestnetTransaction.cs" />
     <Compile Include="TextualTransactionScript.cs" />

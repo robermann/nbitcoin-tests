@@ -18,7 +18,9 @@ namespace NBitcoinFirstProject
 
             //Hasher.Run();
 
-            FirstTestnetTransaction.Run(args);
+            //FirstTestnetTransaction.Run(args);
+
+            MnemonicKey.test();
 
             Console.ReadLine();
         }
